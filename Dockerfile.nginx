@@ -1,0 +1,35 @@
+# Base image with PHP-FPM
+FROM php:7.4-fpm
+
+# Install additional dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
+    mariadb-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install mysqli extension
+RUN docker-php-ext-install mysqli
+
+# Copy Nginx configuration file
+COPY nginx.conf /etc/nginx/sites-available/default
+
+# Copy PHP-FPM configuration file
+COPY /app/php-fpm.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy PHP application files
+COPY /app/index.php .
+
+# Expose port for Nginx
+EXPOSE 9980
+
+# Copy Supervisor configuration file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Start supervisor to manage Nginx and PHP-FPM
+CMD /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+
+
